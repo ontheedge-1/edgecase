@@ -251,19 +251,24 @@
       flex-direction:row;
       flex-wrap:nowrap;
       gap:10px;
-      width: calc(100% - 28px);
+
+      width: 100%;
+      max-width: 340px;   /* <-- key: prevents overflow */
+      margin: 0 auto;     /* center the row */
       justify-content:center;
     }
 
+
     .choiceBtn{
-      flex: 1 1 0;
-      width: 42vw;
-      max-width: 170px;
+      flex: 0 0 auto;     /* <-- key: don't stretch */
+      width: 150px;       /* or 44vw if you prefer */
+      max-width: 160px;
       height: 56px;
       font-size: 13px;
       padding: 10px 12px;
       border-radius: 14px;
     }
+
 
     #stopPrompt{
       font-size: 14px;
@@ -951,6 +956,7 @@
 
 </body>
 </html>
+
 
 
 
