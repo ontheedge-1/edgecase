@@ -1,0 +1,952 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Speed Reading Go/Stop</title>
+  <style>
+  :root{
+    --bg:#06090c;
+    --panel:rgba(22,28,32,.92);
+    --stroke:rgba(255,255,255,.10);
+    --text:rgba(245,248,252,.92);
+    --muted:rgba(245,248,252,.65);
+    --green:#3ad37a;
+    --red:#ff5b5b;
+    --blue: rgba(55,130,255,.75);
+    --blueBorder: rgba(55,130,255,.55);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+    background: radial-gradient(1200px 600px at 50% 20%, rgba(255,255,255,.08), transparent 60%),
+                radial-gradient(1200px 700px at 50% 70%, rgba(255,255,255,.05), transparent 65%),
+                var(--bg);
+    color:var(--text);
+    overflow:hidden;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  /* screens */
+  .screen{
+    position:fixed; inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:28px;
+  }
+  .hidden{display:none !important;}
+
+  /* start card */
+  .card{
+    width:min(980px, 96vw);
+    background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+    border:1px solid var(--stroke);
+    border-radius:28px;
+    padding:26px;
+    box-shadow: 0 24px 80px rgba(0,0,0,.55);
+    backdrop-filter: blur(12px);
+  }
+  .card h1{
+    margin:0 0 8px;
+    font-size:44px;
+    letter-spacing:.5px;
+  }
+  .card p{margin:0 0 14px; color:var(--muted); font-size:18px; line-height:1.35}
+  .grid{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap:16px;
+    margin-top:16px;
+  }
+  .group{
+    border:1px solid var(--stroke);
+    border-radius:18px;
+    padding:16px;
+    background: rgba(10,14,18,.35);
+  }
+  .group h2{margin:0 0 10px; font-size:16px; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:.12em}
+  .rowBtns{display:flex; gap:10px; flex-wrap:wrap;}
+  .btn{
+    border:1px solid var(--stroke);
+    background: rgba(255,255,255,.05);
+    color:var(--muted);
+    border-radius:14px;
+    padding:12px 16px;
+    font-weight:800;
+    cursor:pointer;
+    user-select:none;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn.primary{
+    background: rgba(55,130,255,.78);
+    border-color: rgba(55,130,255,.45);
+  }
+  /* selected buttons are BLUE */
+  .btn.selected{
+    outline: 2px solid var(--blueBorder);
+    background: var(--blue);
+    border-color: var(--blueBorder);
+  }
+  .startRow{
+    display:flex; gap:12px; align-items:center; justify-content:flex-end;
+    margin-top:18px;
+  }
+
+  /* game layout */
+  #gameWrap{
+    width:min(1400px, 96vw);
+    height:min(820px, 92vh);
+    border-radius:34px;
+    border:1px solid var(--stroke);
+    background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+    box-shadow: 0 30px 110px rgba(0,0,0,.65);
+    backdrop-filter: blur(12px);
+    overflow:hidden;
+    position:relative;
+  }
+  #topPanel{
+    margin:22px;
+    height:160px;
+    border-radius:26px;
+    border:1px solid var(--stroke);
+    background: rgba(10,14,18,.45);
+    display:flex;
+    align-items:center;
+    justify-content:center; /* center/center inside the box */
+    padding:18px 18px;
+    text-align:center;
+    font-size:30px;
+    font-weight:800;
+    color:rgba(245,248,252,.92);
+  }
+  #barWrap{
+    margin:0 22px;
+    height:34px;
+    border-radius:20px;
+    border:1px solid rgba(255,255,255,.14);
+    background: rgba(0,0,0,.22);
+    overflow:hidden;
+    position:relative;
+  }
+  #barFill{
+    height:100%;
+    width:0%;
+    background: linear-gradient(90deg, rgba(58,211,122,.22), rgba(58,211,122,.95));
+  }
+  #barFill.red{
+    background: linear-gradient(90deg, rgba(255,91,91,.90), rgba(255,91,91,.25));
+  }
+
+  #mid{
+    position:absolute;
+    left:0; right:0;
+    top:50%;
+    transform:translateY(-28%);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    pointer-events:none;
+    gap:18px;
+  }
+  #bigLabel{
+    font-size:70px;
+    font-weight:900;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    text-shadow: 0 10px 40px rgba(0,0,0,.6);
+  }
+
+  /* hide sentence below READ NOW always */
+  #subLabel{ display:none !important; }
+
+  /* stop buttons area */
+  #stopArea{
+    position:absolute;
+    left:0; right:0;
+    bottom:40px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:16px;
+  }
+
+  /* prompt above buttons */
+  #stopPrompt{
+    display:block;
+    font-size:20px;
+    font-weight:900;
+    color: rgba(245,248,252,.9);
+    text-shadow: 0 10px 30px rgba(0,0,0,.6);
+    text-align:center;
+  }
+
+  /* NEW: layout for the two buttons on desktop/tablet */
+  #twoBtns{
+    display:flex;
+    flex-direction:row;
+    gap:18px;
+    justify-content:center;
+    align-items:center;
+  }
+
+  .choiceBtn.choiceBtn{
+  background: rgba(255,255,255,.07);
+  border: 1px solid rgba(255,255,255,.16);
+  color: rgba(245,248,252,.92);
+
+  /* BASE SIZE (desktop & default) */
+  width: 260px;
+  height: 88px;
+  padding: 0 24px;
+
+  border-radius: 26px;
+  font-size: 22px;
+  font-weight: 800;
+
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+
+  /* === iPhone SE / tiny screens fixes === */
+  @media (max-width: 380px){
+    .screen{ padding: 12px; }
+    #gameWrap{ height: 96vh; border-radius: 22px; }
+
+    #topPanel{
+      height: 120px;
+      margin: 14px;
+      padding: 12px;
+      font-size: 12px;
+    }
+
+    #barWrap{
+      margin: 0 14px;
+      height: 26px;
+    }
+
+    #bigLabel{ font-size: 48px; }
+
+    /* lift STOP section + tighten spacing */
+    #stopArea{ bottom: 16px; gap: 10px; }
+
+    /* move mid content up a little to avoid collisions */
+    #mid{ transform: translateY(-40%); }
+
+    /* keep buttons in ONE row */
+    #twoBtns{
+      display:flex;
+      flex-direction:row;
+      flex-wrap:nowrap;
+      gap:10px;
+      width: calc(100% - 28px);
+      justify-content:center;
+    }
+
+    .choiceBtn{
+      flex: 1 1 0;
+      width: auto;
+      height: 56px;
+      font-size: 15px;
+      padding: 0;
+      border-radius: 18px;
+    }
+
+    #stopPrompt{
+      font-size: 14px;
+      line-height: 1.15;
+      margin: 0 18px;
+    }
+  }
+
+
+
+    /* CHANGED: selected red-phase button is BLUE */
+    .choiceBtn.selected{
+      outline: 2px solid var(--blueBorder);
+      border-color: var(--blueBorder);
+      background: var(--blue);
+    }
+
+    /* phase tint overlay */
+    #tint{
+      position:absolute; inset:-2px;
+      pointer-events:none;
+      background: radial-gradient(1100px 640px at 50% 20%, rgba(58,211,122,.18), transparent 62%),
+                  radial-gradient(1200px 740px at 50% 65%, rgba(0,0,0,.30), transparent 65%);
+      transition: background .18s ease;
+    }
+    #tint.red{
+      background: radial-gradient(1100px 640px at 50% 20%, rgba(255,91,91,.18), transparent 62%),
+                  radial-gradient(1200px 740px at 50% 65%, rgba(0,0,0,.30), transparent 65%);
+    }
+
+    /* end screens */
+    #endScreen{
+      position:fixed; inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      padding:28px;
+    }
+    .endMsg{
+      font-size:min(92px, 11vw);
+      font-weight:1000;
+      letter-spacing:.02em;
+      color: rgba(0,0,0,.55);
+      margin-bottom:22px;
+    }
+    .endSub{
+      font-size: min(36px, 6vw);
+      font-weight:900;
+      color: rgba(0,0,0,.55);
+      margin-bottom:18px;
+    }
+    .endCount{
+      font-size: min(120px, 16vw); /* 3x bigger feel */
+      font-weight:1000;
+      color: rgba(0,0,0,.55);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- START SCREEN -->
+  <div id="startScreen" class="screen">
+    <div class="card">
+      <h1>Edge yourself!</h1>
+      <p><b>I want you to start as horny as possible!</b> Only start the game when your cock is rock hard already! Choose your edging need and a preference now.</p>
+
+      <div class="grid">
+        <div class="group">
+          <h2>Duration</h2>
+          <div class="rowBtns" id="durGroup">
+            <button class="btn" type="button" data-dur="short">Short</button>
+            <button class="btn selected" type="button" data-dur="normal">Normal</button>
+            <button class="btn" type="button" data-dur="long">Long</button>
+          </div>
+          <p style="margin:12px 0 0; font-size:14px; color:var(--muted);">
+            You won’t see the time. Just play.
+          </p>
+        </div>
+
+        <div class="group">
+          <h2>Wanna cum?</h2>
+          <div class="rowBtns" id="rewGroup">
+            <button class="btn selected" type="button" data-rew="yes">Yes</button>
+            <button class="btn" type="button" data-rew="no">No</button>
+            <button class="btn" type="button" data-rew="decide">You decide</button>
+          </div>
+          <p style="margin:12px 0 0; font-size:14px; color:var(--muted);">
+            My advice: Let me decide that for you.
+          </p>
+        </div>
+      </div>
+
+      <div class="startRow">
+        <button class="btn primary" type="button" id="startBtn">Start</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- GAME SCREEN -->
+  <div id="gameScreen" class="screen hidden">
+    <div id="gameWrap">
+      <div id="tint"></div>
+
+      <div id="topPanel"></div>
+
+      <div id="barWrap">
+        <div id="barFill"></div>
+      </div>
+
+      <div id="mid">
+        <div id="bigLabel">Wank!</div>
+        <div id="subLabel"> </div>
+      </div>
+
+      <div id="stopArea" class="hidden">
+        <div id="stopPrompt">How close are you now? <br> If you dont select, I will.</div>
+        <div id="twoBtns">
+          <button class="choiceBtn" type="button" id="btnNotClose">not close</button>
+          <button class="choiceBtn" type="button" id="btnClose">close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- END SCREEN -->
+  <div id="endScreen" class="hidden"></div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+
+  // --------------------------
+  // CONFIG (kept + your latest changes)
+  // --------------------------
+  const WARMUP_GREEN = 5.0; // warmup green = 25 sec
+  const WARMUP_RED   = 10.0;
+
+  // Normal baselines (fixed)
+  const BASE_GREEN = 20.0;
+  const BASE_RED_FIRST_NORMAL = 8.0; // first red in normal fixed
+
+  // Level factors
+  const FACTOR_NORMAL = 1.0;
+  const FACTOR_FAST   = 0.9;
+  const FACTOR_FINAL  = 0.8;
+
+  // Global clamps
+  const MIN_GREEN = 8.0;
+  const MIN_RED   = 5.0;
+  const MAX_RED   = 15.0;
+
+  // Clamp recovery multipliers (only these three)
+  const RECOVERY_SET = [1.0, 1.2, 1.3];
+
+  // "no click" discrete set (Normal/Fast)
+  const NOCLICK_SET = [0.8, 0.9, 1.0, 1.1, 1.2];
+
+  // Final random range (Final only, when not in recovery)
+  const FINAL_MIN_R = 0.7;
+  const FINAL_MAX_R = 1.3;
+
+  // Instruction pools (unchanged concept)
+  const WARMUP_GO = [
+    "Start jerking off and try to get to the edge when the bar gets to 100% (that applies to every round!). Try to get as close as possible, it will make the rest of the game even more fun!"
+  ];
+  const WARMUP_STOP = [
+    "STOP! After this break the real fun begins."
+  ];
+
+  const GO_INSTRUCTIONS = [
+    "Jerk off NOW",
+    "Jerk off",
+    "Work that cock now!",
+    "Wank you horny slut!",
+    "Wank with spit now.",
+    "Grab your balls & squeeze really hard. Hold it! No cock now.",
+    "Jerk off ONLY the tip, use only TWO FINGERS.",
+    "Gently slap your balls",
+    "Go SLOW and steady...",
+    "You can jerk off now!",
+    "Squeeze your balls and slap your cock with the other hand.",
+    "Stroke it hard and flex your abs.",
+    "Use your other hand!",
+    "Show me how much you want it!",
+    "Stroke your cock and squeeze your balls",
+    "Long strokes now."
+  ];
+  const STOP_INSTRUCTIONS = [
+    "Stop it!",
+    "Take poppers if you can.",
+    "Fingers on your nipples.",
+    "STOP TOUCHING!",
+    "STOP!",
+    "No touching!",
+    "Hands off your cock NOW",
+    "Open your mouth and stick your tong out! Stay like that the next round",
+    "Look at your hard cock",
+    "Hands behind your head",
+    "Hands off. Obey!",
+    "Hands off!",
+    "Flex your biceps"
+  ];
+
+  const FINAL_GO = [
+    "Go HARD and FAST",
+    "Jerk off as fast as you can now",
+    "Hard strokes now!",
+    "Milk that cock!",
+    "Now work that cock again.",
+    "Be more ambitious!",
+    "No merci! Work your cock!",
+    "Only ONE long Stroke now!",
+    "Wank you horny slut!",
+    "Almost there, milk that cock!",
+    "Tongue out! And ACTION!"
+  ];
+  const FINAL_STOP = [
+    "This is the final phase!", 
+    "you may be allowed to cum any moment now!",
+    "Getting close?",
+    "Faster in the next round!",
+    "DON'T CUM! Stop touching.",
+    "DON'T DARE TO CUM! Hands off!",
+    "Take a breath - HOLD IT the next round!",
+    "Do you want to cum?",
+    "No cum allowed yet.",
+    "Relax bitch!",
+    "Give your cock a break!",
+    "Stop!"
+  ];
+
+  // --------------------------
+  // DOM
+  // --------------------------
+  const startScreen = $("startScreen");
+  const gameScreen  = $("gameScreen");
+  const endScreen   = $("endScreen");
+
+  const topPanel = $("topPanel");
+  const tint = $("tint");
+  const barFill = $("barFill");
+  const bigLabel = $("bigLabel");
+
+  const stopArea = $("stopArea");
+  const btnNotClose = $("btnNotClose");
+  const btnClose = $("btnClose");
+  const startBtn = $("startBtn");
+
+  const durGroup = $("durGroup");
+  const rewGroup = $("rewGroup");
+
+  // --------------------------
+  // Utils
+  // --------------------------
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  const choice = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  const rand = (a,b) => a + Math.random() * (b - a);
+
+  function pickInstruction(pool){
+    return choice(pool);
+  }
+
+  // --------------------------
+  // Hidden duration choice (kept as before)
+  // --------------------------
+  function chooseTargetSeconds(bucket){
+    if(bucket === "short")  return Math.round(rand(120, 200));  // 1–3 min
+    if(bucket === "normal") return Math.round(rand(780, 900)); // 3–4 min
+    return Math.round(rand(960, 1500));                         // 4–5 min
+  }
+
+  // --------------------------
+  // Game state
+  // --------------------------
+  let durChoice = "normal";
+  let rewardChoice = "yes";
+
+  let targetSeconds = 0;
+  let startTimeMs = 0;
+
+  let level = "warmup"; // warmup -> normal -> fast -> final
+  let phase = "go";     // go (green) or stop (red)
+  let phaseStartMs = 0;
+  let phaseLen = 0;
+
+  let lastGreen = 0;
+  let lastRed = 0;
+
+  // final frozen bases
+  let baseGreenFinal = 0;
+  let baseRedFinal = 0;
+
+  // button capture (normal/fast)
+  let pendingPick = null; // "notclose" | "close" | null
+
+  // clamp recovery flags per color
+  let greenRecoveryNext = false;
+  let redRecoveryNext = false;
+
+  let rafId = 0;
+
+  // --------------------------
+  // UI selection on start screen
+  // --------------------------
+  function selectInGroup(groupEl, attr, value){
+    [...groupEl.querySelectorAll("button")].forEach(b => {
+      b.classList.toggle("selected", b.getAttribute(attr) === value);
+    });
+  }
+  durGroup.addEventListener("click", (e) => {
+    const b = e.target.closest("button");
+    if(!b) return;
+    durChoice = b.dataset.dur;
+    selectInGroup(durGroup, "data-dur", durChoice);
+  });
+  rewGroup.addEventListener("click", (e) => {
+    const b = e.target.closest("button");
+    if(!b) return;
+    rewardChoice = b.dataset.rew;
+    selectInGroup(rewGroup, "data-rew", rewardChoice);
+  });
+
+  // --------------------------
+  // iOS/mobile-proof input wiring (CHANGED)
+  // --------------------------
+  function bindTap(el, fn){
+    if(!el) return;
+    el.addEventListener("pointerup", (e) => {
+      // avoid right-click
+      if (e.pointerType === "mouse" && e.button !== 0) return;
+      fn(e);
+    });
+    el.addEventListener("click", (e) => fn(e));
+  }
+
+  bindTap(startBtn, () => START());
+
+  function setRedChoice(which){
+    pendingPick = which;
+    btnNotClose.classList.toggle("selected", which === "notclose");
+    btnClose.classList.toggle("selected", which === "close");
+  }
+  bindTap(btnNotClose, () => setRedChoice("notclose"));
+  bindTap(btnClose,    () => setRedChoice("close"));
+
+  // --------------------------
+  // Level logic
+  // --------------------------
+  function elapsedSeconds(){
+    return (Date.now() - startTimeMs) / 1000;
+  }
+
+  function computeLevelAfterRed(){
+    // Switch levels ONLY after red finishes.
+    const t = elapsedSeconds();
+    const p = t / targetSeconds;
+
+    if(level === "warmup"){
+      level = "normal";
+      // Enter normal with fixed baselines:
+      lastGreen = BASE_GREEN;
+      lastRed = BASE_RED_FIRST_NORMAL;
+      return;
+    }
+
+    if(p >= 0.70 && level !== "final"){
+      level = "final";
+      // Freeze bases from last FAST phases
+      baseGreenFinal = lastGreen;
+      baseRedFinal = lastRed;
+      return;
+    }
+    if(p >= 0.40 && level === "normal"){
+      level = "fast";
+      return;
+    }
+  }
+
+  function levelFactor(){
+    if(level === "fast") return FACTOR_FAST;
+    if(level === "final") return FACTOR_FINAL;
+    return FACTOR_NORMAL;
+  }
+
+  // --------------------------
+  // Multipliers
+  // --------------------------
+  function pickMultiplierForNext(color){
+    // Clamp recovery override:
+    if(color === "green" && greenRecoveryNext){
+      greenRecoveryNext = false;
+      return choice(RECOVERY_SET);
+    }
+    if(color === "red" && redRecoveryNext){
+      redRecoveryNext = false;
+      return choice(RECOVERY_SET);
+    }
+
+    // Final: no buttons, continuous range 0.7..1.3
+    if(level === "final"){
+      return rand(FINAL_MIN_R, FINAL_MAX_R);
+    }
+
+    // Normal/Fast: buttons exist; if none clicked, use NOCLICK_SET.
+    if(pendingPick === "notclose"){
+      if(color === "green") return choice([1.0, 1.1, 1.2]);
+      return choice([0.8, 0.9, 1.0]);
+    }
+    if(pendingPick === "close"){
+      if(color === "green") return choice([0.8, 0.9, 1.0]);
+      return choice([1.0, 1.1, 1.2]);
+    }
+    // no click:
+    return choice(NOCLICK_SET);
+  }
+
+  // --------------------------
+  // Duration calculation per phase
+  // --------------------------
+  function computeNextGreen(){
+    const lf = levelFactor();
+    const mult = pickMultiplierForNext("green");
+
+    let base;
+    if(level === "final"){
+      base = baseGreenFinal;
+      if(lastGreen === MIN_GREEN && RECOVERY_SET.includes(mult)) base = lastGreen;
+    } else {
+      base = lastGreen;
+      if(lastGreen === MIN_GREEN && RECOVERY_SET.includes(mult)) base = lastGreen;
+    }
+
+    let next = base * mult * lf;
+    if(next < MIN_GREEN){
+      next = MIN_GREEN;
+      greenRecoveryNext = true;
+    }
+    return next;
+  }
+
+  function computeNextRed(){
+    const lf = levelFactor();
+    const mult = pickMultiplierForNext("red");
+
+    let base;
+    if(level === "final"){
+      base = baseRedFinal;
+      if(lastRed === MIN_RED && RECOVERY_SET.includes(mult)) base = lastRed;
+    } else {
+      base = lastRed;
+      if(lastRed === MIN_RED && RECOVERY_SET.includes(mult)) base = lastRed;
+    }
+
+    const raw = base * mult * lf;
+    const next = clamp(raw, MIN_RED, MAX_RED);
+
+    if(next === MIN_RED && raw < MIN_RED){
+      redRecoveryNext = true;
+    }
+    return next;
+  }
+
+  // --------------------------
+  // Phase presentation
+  // --------------------------
+  function setGoUI(text){
+    tint.classList.remove("red");
+    barFill.classList.remove("red");
+    bigLabel.textContent = "Wank!";
+    topPanel.textContent = text;
+  }
+  function setStopUI(text, showButtons){
+    tint.classList.add("red");
+    barFill.classList.add("red");
+    bigLabel.textContent = "STOP";
+    topPanel.textContent = text;
+
+    if(showButtons){
+      stopArea.classList.remove("hidden");
+      stopPrompt.classList.remove("hidden"); // add this
+    } else {
+      stopArea.classList.add("hidden");
+      stopPrompt.classList.add("hidden"); 
+    }
+  }
+
+  function beginPhase(nextPhase, lenSeconds){
+    phase = nextPhase;
+    phaseLen = lenSeconds;
+    phaseStartMs = Date.now();
+
+    // CHANGED: no buttons in all GREEN phases
+    if(nextPhase === "go"){
+      stopArea.classList.add("hidden");
+    }
+
+    // reset selection for next compute window
+    if(phase === "stop"){
+      pendingPick = null;
+      btnNotClose.classList.remove("selected");
+      btnClose.classList.remove("selected");
+    }
+
+    // instruction pool per level/phase
+    if(level === "warmup"){
+      if(phase === "go") setGoUI(pickInstruction(WARMUP_GO));
+      else setStopUI(pickInstruction(WARMUP_STOP), false);
+    } else if(level === "final"){
+      if(phase === "go") setGoUI(pickInstruction(FINAL_GO));
+      else setStopUI(pickInstruction(FINAL_STOP), false); // no buttons in final
+    } else {
+      if(phase === "go") setGoUI(pickInstruction(GO_INSTRUCTIONS));
+      else setStopUI(pickInstruction(STOP_INSTRUCTIONS), true);
+    }
+
+    // bar start state
+    if(phase === "go"){
+      // green fills up left->right
+      barFill.style.width = "0%";
+    } else {
+      // red drains
+      barFill.style.width = "100%";
+    }
+  }
+
+  // --------------------------
+  // End / reward
+  // --------------------------
+  let celebrateTimer = 0;
+
+  function clearTimers(){
+    if(rafId) cancelAnimationFrame(rafId);
+    rafId = 0;
+    if(celebrateTimer) clearInterval(celebrateTimer);
+    celebrateTimer = 0;
+  }
+
+  function decideReward(){
+    if(rewardChoice === "yes") return "yes";
+    if(rewardChoice === "no") return "no";
+    return (Math.random() < 0.70) ? "no" : "yes";
+  }
+
+  function showEnd(){
+    clearTimers();
+    gameScreen.classList.add("hidden");
+    endScreen.classList.remove("hidden");
+
+    const outcome = decideReward();
+
+    if(outcome === "no"){
+      endScreen.style.background = "#ff3b3b";
+      endScreen.innerHTML = `
+        <div>
+          <div class="endMsg">No cum for you today! <br> HANDS OFF YOUR COCK NOW! <br> Try again tomorrow.</div>
+        </div>
+      `;
+      return;
+    }
+
+    endScreen.style.background = "#2ad36a";
+    let t = 10;
+    endScreen.innerHTML = `
+      <div>
+        <div class="endMsg">CUM! CUM! CUM!</div>
+        <div class="endSub">Hurry up! <br>When the time is over you will TAKE YOUR HAND OFF YOUR COCK <br>no matter what!</div>
+        <div class="endCount" id="endCount">${t}</div>
+      </div>
+    `;
+    const endCount = document.getElementById("endCount");
+
+    celebrateTimer = setInterval(() => {
+      t -= 1;
+      endCount.textContent = String(Math.max(0, t));
+      if(t <= 0){
+        clearInterval(celebrateTimer);
+        celebrateTimer = 0;
+        endScreen.style.background = "#000";
+        endScreen.innerHTML = `
+          <div>
+            <div class="endMsg" style="color:rgba(245,248,252,.92); text-shadow: 0 10px 40px rgba(0,0,0,.8);">Time over.</div>
+            <div class="endSub" style="color:rgba(245,248,252,.80);">STOP wanking NOW! <br> Hands off your cock! <br> <br> Did you manage shoot a load? <br> If not, try harder tomorrow. </div>
+          </div>
+        `;
+      }
+    }, 1000);
+  }
+
+  // --------------------------
+  // Main loop
+  // --------------------------
+  function tick(){
+    const now = Date.now();
+    const t = (now - phaseStartMs) / 1000;
+    const p = clamp(t / phaseLen, 0, 1);
+
+    if(phase === "go"){
+      barFill.style.width = (p * 100).toFixed(2) + "%";
+    } else {
+      barFill.style.width = ((1 - p) * 100).toFixed(2) + "%";
+    }
+
+    if(t >= phaseLen){
+      if(level === "warmup"){
+        if(phase === "go"){
+          lastGreen = phaseLen;
+          beginPhase("stop", WARMUP_RED);
+        } else {
+          lastRed = phaseLen;
+          computeLevelAfterRed(); // switches to normal and sets baselines
+          beginPhase("go", lastGreen); // Normal 1 Green = BASE_GREEN
+        }
+      } else if(phase === "go"){
+        lastGreen = phaseLen;
+
+        // end after green if time is over
+        if(elapsedSeconds() >= targetSeconds){
+          showEnd();
+          return;
+        }
+
+        // compute next red
+        const stopLen = computeNextRed();
+        beginPhase("stop", stopLen);
+
+      } else {
+        // stop -> go
+        lastRed = phaseLen;
+
+        // switch levels after red
+        computeLevelAfterRed();
+
+        // compute next green
+        const nextGreenLen = computeNextGreen();
+
+        // after red ends, clear pending pick
+        pendingPick = null;
+
+        beginPhase("go", nextGreenLen);
+      }
+    }
+
+    rafId = requestAnimationFrame(tick);
+  }
+
+  // --------------------------
+  // START
+  // --------------------------
+  function START(){
+    // iOS: ensure a user gesture kicked us; just switch screens synchronously
+    startScreen.classList.add("hidden");
+    endScreen.classList.add("hidden");
+    gameScreen.classList.remove("hidden");
+
+    // choose hidden duration
+    targetSeconds = chooseTargetSeconds(durChoice);
+
+    // reset state
+    startTimeMs = Date.now();
+    level = "warmup";
+    phase = "go";
+    pendingPick = null;
+    greenRecoveryNext = false;
+    redRecoveryNext = false;
+
+    // initial warmup
+    lastGreen = WARMUP_GREEN;
+    lastRed = WARMUP_RED;
+    baseGreenFinal = 0;
+    baseRedFinal = 0;
+
+    // begin
+    beginPhase("go", WARMUP_GREEN);
+
+    if(rafId) cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(tick);
+  }
+
+  // expose
+  window.START = START;
+
+})();
+</script>
+
+</body>
+</html>
