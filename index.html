@@ -381,7 +381,7 @@
           <div class="rowBtns" id="rewGroup">
             <button class="btn selected" type="button" data-rew="yes">Yes</button>
             <button class="btn" type="button" data-rew="no">No</button>
-            <button class="btn" type="button" data-rew="decide">You decide</button>
+            <button class="btn selected" type="button" data-rew="decide">You decide</button>
           </div>
           <p style="margin:12px 0 0; font-size:14px; color:var(--muted);">
             My advice: Let me decide that for you.
@@ -431,12 +431,12 @@
   // --------------------------
   // CONFIG (kept + your latest changes)
   // --------------------------
-  const WARMUP_GREEN = 5.0; // warmup green = 25 sec
+  const WARMUP_GREEN = 22.0; // warmup green = 25 sec
   const WARMUP_RED   = 10.0;
 
   // Normal baselines (fixed)
-  const BASE_GREEN = 10.0;
-  const BASE_RED_FIRST_NORMAL = 8.0; // first red in normal fixed
+  const BASE_GREEN = 20.0;
+  const BASE_RED_FIRST_NORMAL = 9.0; // first red in normal fixed
 
   // Level factors
   const FACTOR_NORMAL = 1.0;
@@ -983,6 +983,7 @@
 
 </body>
 </html>
+
 
 
 
