@@ -322,6 +322,37 @@
       font-weight:1000;
       color: rgba(0,0,0,.55);
     }
+
+/* ===== Hard iPhone/tiny-screen STOP button fix (put at END of style) ===== */
+@media (max-width: 420px){
+
+  /* keep the row constrained to viewport */
+  #twoBtns{
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 10px !important;
+
+    width: 100% !important;
+    max-width: calc(100vw - 48px) !important; /* 24px padding each side safety */
+    margin: 0 auto !important;
+    padding: 0 6px !important;
+
+    box-sizing: border-box !important;
+  }
+
+  /* force each button to fit its grid cell (no fixed px width) */
+  .choiceBtn{
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+
+    height: 56px !important;
+    font-size: 13px !important;
+    padding: 10px 8px !important;
+    border-radius: 14px !important;
+  }
+}
+    
   </style>
 </head>
 <body>
@@ -952,6 +983,7 @@
 
 </body>
 </html>
+
 
 
 
