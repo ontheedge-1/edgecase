@@ -255,19 +255,22 @@
       width: 100%;
       max-width: 340px;   /* <-- key: prevents overflow */
       margin: 0 auto;     /* center the row */
+      padding: 0 6px;       /* NEW: adds inner safety */
       justify-content:center;
     }
 
 
     .choiceBtn{
-      flex: 0 0 auto;     /* <-- key: don't stretch */
-      width: 44vw;       /* or 44vw if you prefer */
-      max-width: 160px;
+      flex: 1 1 0;        /* fill the row evenly */
+      width: auto;        /* STOP using vw here */
+      max-width: none;    /* let flex handle it */
       height: 56px;
       font-size: 13px;
-      padding: 10px 12px;
+      padding: 10px 8px;
       border-radius: 14px;
     }
+
+    #gameWrap{ max-width: 100%; }
 
 
     #stopPrompt{
@@ -956,6 +959,7 @@
 
 </body>
 </html>
+
 
 
 
