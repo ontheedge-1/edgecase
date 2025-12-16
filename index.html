@@ -152,6 +152,7 @@
     justify-content:center;
     pointer-events:none;
     gap:18px;
+    z-index: 10;
   }
   #bigLabel{
     font-size:70px;
@@ -173,6 +174,7 @@
     flex-direction:column;
     align-items:center;
     gap:16px;
+    z-index: 50;
   }
 
   /* prompt above buttons */
@@ -239,11 +241,17 @@
 
     #bigLabel{ font-size: 40px; }
 
-    /* lift STOP section + tighten spacing */
-    #stopArea{ bottom: 16px; gap: 10px; }
-
     /* move mid content up a little to avoid collisions */
-    #mid{ transform: translateY(-40%); }
+    #mid{ 
+      transform: translateY(-40%);
+      z-index: 10;
+    }
+    
+    /* lift STOP section + tighten spacing */
+    #stopArea{ 
+      bottom: 16px; gap: 10px; 
+      z-index: 50;
+    }
 
     /* keep buttons in ONE row */
     #twoBtns{
@@ -959,6 +967,7 @@
 
 </body>
 </html>
+
 
 
 
