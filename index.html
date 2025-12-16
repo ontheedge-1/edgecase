@@ -247,22 +247,22 @@
 
     /* keep buttons in ONE row */
     #twoBtns{
-      display:flex;
-      flex-direction:row;
-      flex-wrap:nowrap;
-      gap:10px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
 
       width: 100%;
-      max-width: 340px;   /* <-- key: prevents overflow */
-      margin: 0 auto;     /* center the row */
-      padding: 0 6px;       /* NEW: adds inner safety */
-      justify-content:center;
+      max-width: min(340px, calc(100vw - 48px));  /* ← PUT IT HERE */
+      margin: 0 auto;
+      padding: 0 6px;
+}
     }
 
 
     .choiceBtn{
       flex: 1 1 0;        /* fill the row evenly */
-      width: auto;        /* STOP using vw here */
+      min-width: 0; 
+      width: 0;        /* STOP using vw here */
       max-width: none;    /* let flex handle it */
       height: 56px;
       font-size: 13px;
@@ -959,6 +959,7 @@
 
 </body>
 </html>
+
 
 
 
