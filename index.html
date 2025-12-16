@@ -174,6 +174,7 @@
     flex-direction:column;
     align-items:center;
     gap:16px;
+    pointer-events: auto; 
     z-index: 50;
   }
 
@@ -213,6 +214,7 @@
   cursor: pointer;
   user-select: none;
   touch-action: manipulation;
+  pointer-events: auto;          /* ← ADD */
   -webkit-tap-highlight-color: transparent;
 
   display: flex;
@@ -222,72 +224,55 @@
 
 
 
-  /* === iPhone SE / tiny screens fixes === */
-  @media (max-width: 380px){
-    .screen{ padding: 12px; }
-    #gameWrap{ height: 96vh; border-radius: 22px; }
+/* === iPhone SE / tiny screens fixes === */
+@media (max-width: 380px){
+  .screen{ padding: 12px; }
+  #gameWrap{ height: 96vh; border-radius: 22px; max-width: 100%; }
 
-    #topPanel{
-      height: 140px;
-      margin: 14px;
-      padding: 12px;
-      font-size: 10px;
-    }
-
-    #barWrap{
-      margin: 0 14px;
-      height: 26px;
-    }
-
-    #bigLabel{ font-size: 40px; }
-
-    /* move mid content up a little to avoid collisions */
-    #mid{ 
-      transform: translateY(-40%);
-      z-index: 10;
-    }
-    
-    /* lift STOP section + tighten spacing */
-    #stopArea{ 
-      bottom: 16px; gap: 10px; 
-      z-index: 50;
-    }
-
-    /* keep buttons in ONE row */
-    #twoBtns{
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-
-      width: 100%;
-      max-width: min(340px, calc(100vw - 48px));  /* ← PUT IT HERE */
-      margin: 0 auto;
-      padding: 0 6px;
-}
-    }
-
-
-    .choiceBtn{
-      flex: 1 1 0;        /* fill the row evenly */
-      min-width: 0; 
-      width: auto;        /* STOP using vw here */
-      max-width: none;    /* let flex handle it */
-      height: 56px;
-      font-size: 13px;
-      padding: 10px 8px;
-      border-radius: 14px;
-    }
-
-    #gameWrap{ max-width: 100%; }
-
-
-    #stopPrompt{
-      font-size: 12px;
-      line-height: 1.15;
-      margin: 0 18px;
-    }
+  #topPanel{
+    height: 140px;
+    margin: 14px;
+    padding: 12px;
+    font-size: 10px;
   }
 
+  #barWrap{
+    margin: 0 14px;
+    height: 26px;
+  }
+
+  #bigLabel{ font-size: 40px; }
+
+  #mid{ transform: translateY(-40%); z-index: 10; }
+
+  #stopArea{ bottom: 16px; gap: 10px; z-index: 50; }
+
+  #twoBtns{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+
+    width: 100%;
+    max-width: min(340px, calc(100vw - 48px));
+    margin: 0 auto;
+    padding: 0 6px;
+  }
+
+  .choiceBtn{
+    min-width: 0;
+    width: auto;
+    height: 56px;
+    font-size: 13px;
+    padding: 10px 8px;
+    border-radius: 14px;
+  }
+
+  #stopPrompt{
+    font-size: 12px;
+    line-height: 1.15;
+    margin: 0 18px;
+  }
+}
 
 
     /* CHANGED: selected red-phase button is BLUE */
@@ -967,6 +952,7 @@
 
 </body>
 </html>
+
 
 
 
